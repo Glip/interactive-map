@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Регион 3</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Регион 3</h1>
+  <div class="map-container" style="position:relative; width:100vw; max-width:100vw; margin:0 auto;">
+    <img src="img/region3.jpg" usemap="#region3map" alt="Карта региона 3" id="region3-map" style="width:100vw; height:auto; display:block;">
+    <svg id="svg-overlay" style="position:absolute; left:0; top:0; width:100vw; height:100%; pointer-events:none; z-index:2;"></svg>
+    <div id="tooltip" style="position:absolute; display:none; background:rgba(34,34,34,0.95); color:#fff; padding:6px 14px; border-radius:8px; font-size:1.1em; pointer-events:none; z-index:10; white-space:nowrap;"></div>
+    <map name="region3map" id="region3map">
+      <area shape="circle" coords="140,140,30" href="city7.html" alt="Город 7" data-shape="circle" data-coords="140,140,30" data-title="Город 7">
+      <area shape="circle" coords="240,190,30" href="city8.html" alt="Город 8" data-shape="circle" data-coords="240,190,30" data-title="Город 8">
+      <area shape="circle" coords="340,240,30" href="city9.html" alt="Город 9" data-shape="circle" data-coords="340,240,30" data-title="Город 9">
+    </map>
+  </div>
+  <a href="index.html">← Назад к карте мира</a>
+  <script>
+    const img = document.getElementById('region3-map');
+    const svg = document.getElementById('svg-overlay');
+    const map = document.getElementById('region3map');
+    const areas = map.getElementsByTagName('area');
+    const tooltip = document.getElementById('tooltip');
+
+    for (const area of areas) {
+      if (!area.dataset.originalCoords) {
+        area.dataset.originalCoords = area.coords;
+      }
+    }
+
+    function rescaleAreas() {
+      const scaleX = img.clientWidth / img.naturalWidth;
+      const scaleY = img.clientHeight / img.naturalHeight;
+      for (const area of areas) {
+        const orig = area.dataset.originalCoords.split(',').map(Number);
+        let newCoords = [];
+        if (area.shape.toLowerCase() === 'circle') {
+          newCoords = [
+            Math.round(orig[0] * scaleX),
+            Math.round(orig[1] * scaleY),
+            Math.round(orig[2] * ((scaleX + scaleY) / 2))
+          ];
+        }
+        area.coords = newCoords.join(',');
+      }
+    }
+
+    img.addEventListener('load', rescaleAreas);
+    window.addEventListener('resize', rescaleAreas);
+    if (img.complete) rescaleAreas();
+
+    function drawHighlight(area) {
+      svg.innerHTML = '';
+      const shape = area.getAttribute('shape').toLowerCase();
+      const coords = area.coords.split(',').map(Number);
+      let el;
+      if (shape === 'circle') {
+        const [cx, cy, r] = coords;
+        el = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        el.setAttribute('cx', cx);
+        el.setAttribute('cy', cy);
+        el.setAttribute('rx', r);
+        el.setAttribute('ry', r);
+      }
+      if (el) {
+        el.setAttribute('fill', 'rgba(26,115,232,0.2)');
+        el.setAttribute('stroke', '#1a73e8');
+        el.setAttribute('stroke-width', '3');
+        svg.appendChild(el);
+      }
+    }
+
+    for (const area of areas) {
+      area.addEventListener('mouseenter', function(e) {
+        drawHighlight(area);
+        // Tooltip
+        const coords = area.coords.split(',').map(Number);
+        const shape = area.getAttribute('shape').toLowerCase();
+        let x = 0, y = 0;
+        if (shape === 'rect') {
+          x = coords[0] + (coords[2] - coords[0]) / 2;
+          y = coords[1] - 20;
+        } else if (shape === 'circle') {
+          x = coords[0];
+          y = coords[1] - coords[2] - 10;
+        } else if (shape === 'poly') {
+          let xs = [], ys = [];
+          for (let i = 0; i < coords.length; i += 2) {
+            xs.push(coords[i]);
+            ys.push(coords[i+1]);
+          }
+          const minX = Math.min(...xs), maxX = Math.max(...xs);
+          const minY = Math.min(...ys), maxY = Math.max(...ys);
+          x = minX + (maxX - minX) / 2;
+          y = minY - 20;
+        }
+        tooltip.textContent = area.dataset.title || area.alt || '';
+        tooltip.style.display = 'block';
+        tooltip.style.left = x + 'px';
+        tooltip.style.top = y + 'px';
+      });
+      area.addEventListener('mousemove', function(e) {
+        const coords = area.coords.split(',').map(Number);
+        const shape = area.getAttribute('shape').toLowerCase();
+        let x = 0, y = 0;
+        if (shape === 'rect') {
+          x = coords[0] + (coords[2] - coords[0]) / 2;
+          y = coords[1] - 20;
+        } else if (shape === 'circle') {
+          x = coords[0];
+          y = coords[1] - coords[2] - 10;
+        } else if (shape === 'poly') {
+          let xs = [], ys = [];
+          for (let i = 0; i < coords.length; i += 2) {
+            xs.push(coords[i]);
+            ys.push(coords[i+1]);
+          }
+          const minX = Math.min(...xs), maxX = Math.max(...xs);
+          const minY = Math.min(...ys), maxY = Math.max(...ys);
+          x = minX + (maxX - minX) / 2;
+          y = minY - 20;
+        }
+        tooltip.style.left = x + 'px';
+        tooltip.style.top = y + 'px';
+      });
+      area.addEventListener('mouseleave', function() {
+        svg.innerHTML = '';
+        tooltip.style.display = 'none';
+      });
+    }
+    window.addEventListener('resize', function() {
+      svg.innerHTML = '';
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <title>Город 4</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>Город 4</h1>
+  <div class="map-container" style="position:relative; width:100vw; max-width:100vw; margin:0 auto;">
+    <img src="img/city4.jpg" alt="Город 4" id="city-map" style="width:100vw; height:auto; display:block;" usemap="#citymap">
+    <svg id="svg-overlay" style="position:absolute; left:0; top:0; width:100vw; height:100%; pointer-events:none; z-index:2;"></svg>
+    <div id="tooltip" style="position:absolute; display:none; background:rgba(34,34,34,0.95); color:#fff; padding:6px 14px; border-radius:8px; font-size:1.1em; pointer-events:none; z-index:10; white-space:nowrap;"></div>
+    <map name="citymap" id="citymap">
+      <area shape="circle" coords="500,300,100" href="https://example.com/forum/city4" alt="Форум города 4" target="_blank" data-shape="circle" data-coords="500,300,100" data-title="Форум города 4">
+    </map>
+  </div>
+  <p>Описание города 4.</p>
+  <a href="region2.html">← Назад к региону 2</a>
+  <script>
+    const img = document.getElementById('city-map');
+    const svg = document.getElementById('svg-overlay');
+    const map = document.getElementById('citymap');
+    const areas = map.getElementsByTagName('area');
+    const tooltip = document.getElementById('tooltip');
+
+    for (const area of areas) {
+      if (!area.dataset.originalCoords) {
+        area.dataset.originalCoords = area.coords;
+      }
+    }
+
+    function rescaleAreas() {
+      const scaleX = img.clientWidth / img.naturalWidth;
+      const scaleY = img.clientHeight / img.naturalHeight;
+      for (const area of areas) {
+        const orig = area.dataset.originalCoords.split(',').map(Number);
+        let newCoords = [];
+        if (area.shape.toLowerCase() === 'circle') {
+          newCoords = [
+            Math.round(orig[0] * scaleX),
+            Math.round(orig[1] * scaleY),
+            Math.round(orig[2] * ((scaleX + scaleY) / 2))
+          ];
+        }
+        area.coords = newCoords.join(',');
+      }
+    }
+
+    img.addEventListener('load', rescaleAreas);
+    window.addEventListener('resize', rescaleAreas);
+    if (img.complete) rescaleAreas();
+
+    function drawHighlight(area) {
+      svg.innerHTML = '';
+      const shape = area.getAttribute('shape').toLowerCase();
+      const coords = area.coords.split(',').map(Number);
+      let el;
+      if (shape === 'circle') {
+        const [cx, cy, r] = coords;
+        el = document.createElementNS('http://www.w3.org/2000/svg', 'ellipse');
+        el.setAttribute('cx', cx);
+        el.setAttribute('cy', cy);
+        el.setAttribute('rx', r);
+        el.setAttribute('ry', r);
+      }
+      if (el) {
+        el.setAttribute('fill', 'rgba(26,115,232,0.2)');
+        el.setAttribute('stroke', '#1a73e8');
+        el.setAttribute('stroke-width', '3');
+        svg.appendChild(el);
+      }
+    }
+
+    for (const area of areas) {
+      area.addEventListener('mouseenter', function() {
+        drawHighlight(area);
+        const title = area.getAttribute('data-title');
+        tooltip.innerHTML = title;
+        tooltip.style.display = 'block';
+      });
+      area.addEventListener('mouseleave', function() {
+        svg.innerHTML = '';
+        tooltip.style.display = 'none';
+      });
+    }
+    window.addEventListener('resize', function() {
+      svg.innerHTML = '';
+    });
+  </script>
+</body>
+</html>
